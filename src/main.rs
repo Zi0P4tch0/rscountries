@@ -29,7 +29,7 @@ async fn main() -> std::io::Result<()> {
     info!(logger, "Bootstrapping server...");
     info!(logger, "Loading countries...");
 
-    let json_bytes = include_bytes!("../countries.json");
+    let json_bytes = include_bytes!("countries.json");
     let json_str = std::str::from_utf8(json_bytes).expect("Failed to convert JSON bytes to str");
     let countries: Vec<Country> = serde_json::from_str(json_str)?;
 
