@@ -37,6 +37,11 @@ cargo run
 
 Default port is **8080**.
 
+## Features
+
+- Built on top of Actix Web
+- Good-looking terminal logging via `slog`.
+
 ## 📚 Usage
 
 Once the server is running, you can make requests to the API using any HTTP client or web browser.
