@@ -2,6 +2,7 @@ mod models;
 
 use actix_web::{web, App, HttpServer, Responder, get, HttpResponse};
 use actix_web::dev::Service;
+use serde_json::json;
 use slog::{Drain, info, warn};
 
 use models::Country;
@@ -15,6 +16,25 @@ struct AppState {
 #[get("/v3.1/all")]
 async fn get_countries(state: web::Data<AppState>) -> impl Responder {
     HttpResponse::Ok().json(&state.countries)
+}
+
+#[get("/v3.1/name/{name}")]
+async fn get_country_by_name(state: web::Data<AppState>, name: web::Path<String>) -> impl Responder {
+    let name = name.into_inner();
+    let countries = state.countries.iter().filter(|c|
+        c.name.common.to_lowercase().contains(&name.to_lowercase()) ||
+        c.name.official.to_lowercase().contains(&name.to_lowercase()) ||
+        c.alt_spellings.as_ref().map(|a| 
+            a.iter().any(|s| s.to_lowercase().contains(&name.to_lowercase()))
+        ).unwrap_or(false) 
+    ).collect::<Vec<&Country>>();
+    match countries.len() {
+        0 => HttpResponse::NotFound().json(json!({
+            "status": 404,
+            "message": "Not Found"
+        })),
+        _ => HttpResponse::Ok().json(&countries)
+    }
 }
 
 #[actix_web::main]
@@ -67,6 +87,7 @@ async fn main() -> std::io::Result<()> {
                 }
             })
             .service(get_countries)
+            .service(get_country_by_name)
     })
     .bind(("0.0.0.0", 8080))?
     .run()

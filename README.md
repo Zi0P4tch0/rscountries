@@ -51,6 +51,9 @@ Once the server is running, you can make requests to the API using any HTTP clie
 
 - `GET /v3.1/all`: Retrieve a list of all countries
     - Example: `http://localhost:8080/v3.1/all`
+- `GET /v3.1/name/{name}`: Retrieve a list of countries whose name contains `{name}` (case-insensitive).
+    - Example: `https://localhost:8080/v3.1/name/eesti`
+    - Example: `https://localhost:8080/v3.1/name/deutschland`
 
 ## 📋 API Data Fields (v3.1)
 

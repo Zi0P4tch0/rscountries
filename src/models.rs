@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 pub struct CountryName {
     pub common: String,
     pub official: String,
-    native: Option<HashMap<String, CountryName>>
+    pub native: Option<HashMap<String, CountryName>>
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -85,7 +85,8 @@ pub struct Country {
     #[serde(rename = "idd")]
     international_direct_dialing: Option<CountryInternationalDirectDialing>,
     capital: Option<Vec<String>>,
-    alt_spellings: Option<Vec<String>>,
+    #[serde(rename = "altSpellings")]
+    pub alt_spellings: Option<Vec<String>>,
     region: String,
     subregion: Option<String>,
     languages: Option<HashMap<String, String>>,
