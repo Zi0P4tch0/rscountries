@@ -41,6 +41,7 @@ Default port is **8080**.
 
 - Built on top of Actix Web
 - Good-looking terminal logging via `slog`.
+- Comes with Dockerfile for easy deployment (final image is around 100MB in size).
 
 ## 📚 Usage
 
