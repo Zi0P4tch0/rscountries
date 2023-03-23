@@ -1,11 +1,13 @@
+mod logging;
 mod models;
 
 use actix_web::{web, App, HttpServer, Responder, get, HttpResponse};
-use actix_web::dev::Service;
+use serde::Deserialize;
 use serde_json::json;
-use slog::{Drain, info, warn};
+use slog::{Drain, info};
 
 use models::Country;
+use logging::SlogLogger;
 
 #[derive(Clone)]
 struct AppState {
@@ -18,16 +20,31 @@ async fn get_countries(state: web::Data<AppState>) -> impl Responder {
     HttpResponse::Ok().json(&state.countries)
 }
 
+#[derive(Debug, Deserialize)]
+pub struct GetCountryByNameParams {
+    #[serde(rename = "fullText")]
+    full_text: Option<bool>
+}
+
 #[get("/v3.1/name/{name}")]
-async fn get_country_by_name(state: web::Data<AppState>, name: web::Path<String>) -> impl Responder {
+async fn get_country_by_name(state: web::Data<AppState>, name: web::Path<String>, query: web::Query<GetCountryByNameParams>) -> impl Responder {
+    let full_text_search = query.full_text.unwrap_or(false);
     let name = name.into_inner();
-    let countries = state.countries.iter().filter(|c|
-        c.name.common.to_lowercase().contains(&name.to_lowercase()) ||
-        c.name.official.to_lowercase().contains(&name.to_lowercase()) ||
-        c.alt_spellings.as_ref().map(|a| 
-            a.iter().any(|s| s.to_lowercase().contains(&name.to_lowercase()))
-        ).unwrap_or(false) 
-    ).collect::<Vec<&Country>>();
+    let countries: Vec<&Country>; 
+    if full_text_search {
+        countries = state.countries.iter().filter(|c|
+            c.name.common.eq_ignore_ascii_case(name.as_str()) ||
+            c.name.official.eq_ignore_ascii_case(name.as_str())
+        ).collect::<Vec<&Country>>();
+    } else {
+        countries = state.countries.iter().filter(|c|
+            c.name.common.to_lowercase().contains(&name.to_lowercase()) ||
+            c.name.official.to_lowercase().contains(&name.to_lowercase()) ||
+            c.alt_spellings.as_ref().map(|a| 
+                a.iter().any(|s| s.to_lowercase().contains(&name.to_lowercase()))
+            ).unwrap_or(false) 
+        ).collect::<Vec<&Country>>();
+    }
     match countries.len() {
         0 => HttpResponse::NotFound().json(json!({
             "status": 404,
@@ -66,26 +83,7 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(app_state.clone()))
-            .wrap_fn(|req, srv| {
-                let logger = req.app_data::<web::Data<AppState>>().unwrap().logger.clone();
-                let req_method = req.method().to_string();
-                let req_path = req.path().to_string();
-                let start = std::time::Instant::now();
-                let fut = srv.call(req);
-                async move {
-                    let res = fut.await;
-                    let elapsed = start.elapsed();
-                    let status = res.as_ref().map(|r| r.status());
-                    if let Ok(status) = status {
-                        if status.is_client_error() || status.is_server_error() {
-                            warn!(logger, "{} {} {} {:?}", req_method, req_path, status, elapsed);
-                        } else {
-                            info!(logger, "{} {} {} {:?}", req_method, req_path, status, elapsed);
-                        }
-                    }
-                    res
-                }
-            })
+            .wrap(SlogLogger)
             .service(get_countries)
             .service(get_country_by_name)
     })

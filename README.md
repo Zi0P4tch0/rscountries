@@ -40,8 +40,8 @@ Default port is **8080**.
 ## Features
 
 - Built on top of Actix Web
-- Good-looking terminal logging via `slog`.
-- Comes with Dockerfile for easy deployment (final image is around 100MB in size).
+- Good-looking terminal logging via `slog` (implemented as an Actix Web middleware).
+- Comes with Dockerfile for easy testing/deployment (final image is around 100MB in size).
 
 ## 📚 Usage
 
@@ -52,8 +52,11 @@ Once the server is running, you can make requests to the API using any HTTP clie
 - `GET /v3.1/all`: Retrieve a list of all countries
     - Example: `http://localhost:8080/v3.1/all`
 - `GET /v3.1/name/{name}`: Retrieve a list of countries whose name contains `{name}` (case-insensitive).
-    - Example: `https://localhost:8080/v3.1/name/eesti`
-    - Example: `https://localhost:8080/v3.1/name/deutschland`
+    - Example: `http://localhost:8080/v3.1/name/eesti`
+    - Example: `http://localhost:8080/v3.1/name/deutschland`
+- `GET /v3.1/name/{name}?fullText=true`: Retrieve a list of countries whose name is `{name}` (case-insensitive).
+    - Example: `http://localhost:8080/v3.1/name/aruba?fullText=true`
+
 
 ## 📋 API Data Fields (v3.1)
 
